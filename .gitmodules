@@ -1,0 +1,3 @@
+[submodule "FluidLite"]
+	path = FluidLite
+	url = git@github.com:pedrolcl/FluidLite.git
