@@ -1,7 +1,7 @@
-FluidLite
-================================
+FluidLite MIDI Synthesizer for Qt
+=================================
 
-This project is a multiplatform MIDI Synth library based on the FluidLite Synthesizer.
+This project is a multiplatform real time MIDI Synth library based on the FluidLite Synthesizer.
 
 The library uses Drumstick::RT MIDI input and Qt audio output. Complete compile-time dependencies are:
 * Qt5 or Qt6, including QtMultimedia. http://www.qt.io/
@@ -19,12 +19,12 @@ Hacking
 -------
 
 Use your favorite IDE or text editor with the source files. My preference is QtCreator: https://www.qt.io/ide/
-To build, test and debug you may also find QtCreator interesting. You may also use CMake (>= 3.9) to build the project instead of qmake.
+To build, test and debug you may also find QtCreator interesting. You should use CMake (>= 3.14) to configure the project.
 
-Licenses
---------
+License
+-------
 
-Copyright (C) 2016-2022 Pedro López-Cabanillas.
+Copyright (C) 2022 Pedro López-Cabanillas.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -39,5 +39,4 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-
-This project includes code from the FluidLite synthesizer
+This project includes code from the FluidLite synthesizer.
