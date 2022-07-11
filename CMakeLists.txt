@@ -22,7 +22,11 @@ find_package(Drumstick 2.6 COMPONENTS RT REQUIRED)
 include(GNUInstallDirs)
 
 add_subdirectory(FluidLite)
-include(${PROJECT_BINARY_DIR}/FluidLite/fluidlite-targets.cmake)
+if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/FluidLite/aliases.cmake)
+    include(${CMAKE_CURRENT_SOURCE_DIR}/FluidLite/aliases.cmake)
+else()
+    message(FATAL_ERROR "Missing file 'aliases.cmake'. Use: 'git submodule update'")
+endif()
 
 add_subdirectory(libcommon)
 add_subdirectory(cmdlnsynth)
