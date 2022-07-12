@@ -297,36 +297,25 @@
     <item row="4" column="0">
      <widget class="QDial" name="dial_Reverb">
       <property name="enabled">
-       <bool>false</bool>
+       <bool>true</bool>
       </property>
       <property name="maximum">
-       <number>32765</number>
+       <number>100</number>
       </property>
      </widget>
     </item>
     <item row="4" column="2">
      <widget class="QDial" name="dial_Chorus">
-      <property name="enabled">
-       <bool>false</bool>
-      </property>
       <property name="maximum">
-       <number>32765</number>
+       <number>100</number>
       </property>
      </widget>
     </item>
     <item row="5" column="0">
-     <widget class="QComboBox" name="combo_Reverb">
-      <property name="enabled">
-       <bool>false</bool>
-      </property>
-     </widget>
+     <widget class="QComboBox" name="combo_Reverb"/>
     </item>
     <item row="5" column="2">
-     <widget class="QComboBox" name="combo_Chorus">
-      <property name="enabled">
-       <bool>false</bool>
-      </property>
-     </widget>
+     <widget class="QComboBox" name="combo_Chorus"/>
     </item>
    </layout>
   </widget>

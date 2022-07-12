@@ -25,7 +25,7 @@ SynthController::SynthController(int bufTime, QObject *parent)
     m_requestedBufferTime(bufTime),
     m_running(false)
 {
-  qDebug() << Q_FUNC_INFO;
+  //qDebug() << Q_FUNC_INFO;
   m_renderer.reset(new SynthRenderer());
   m_format = m_renderer->format();
   initAudioDevices();
@@ -42,13 +42,13 @@ SynthController::SynthController(int bufTime, QObject *parent)
 
 SynthController::~SynthController()
 {
-    qDebug() << Q_FUNC_INFO;
+    //qDebug() << Q_FUNC_INFO;
 }
 
 void
 SynthController::start()
 {
-    qDebug() << Q_FUNC_INFO;
+    //qDebug() << Q_FUNC_INFO;
     m_renderer->start();
     auto bufferBytes = m_format.bytesForDuration(m_requestedBufferTime * 1000);
     qDebug() << Q_FUNC_INFO
@@ -69,7 +69,7 @@ SynthController::start()
 void
 SynthController::stop()
 {
-    qDebug() << Q_FUNC_INFO;
+    //qDebug() << Q_FUNC_INFO;
     m_running = false;
     m_stallDetector.stop();
     if (!m_audioOutput.isNull()) {
@@ -89,7 +89,7 @@ SynthController::renderer() const
 void
 SynthController::initAudio()
 {
-    qDebug() << Q_FUNC_INFO;
+    //qDebug() << Q_FUNC_INFO;
     if (!m_audioDevice.isFormatSupported(m_format)) {
         qCritical() << Q_FUNC_INFO << "Audio format not supported" << m_format;
         return;
@@ -117,7 +117,7 @@ SynthController::initAudioDevices()
     m_audioDevice = QAudioDeviceInfo::defaultOutputDevice();
     foreach(auto &dev, devices) {
         if (dev.isFormatSupported(m_format)) {
-            qDebug() << Q_FUNC_INFO << dev.deviceName();
+            //qDebug() << Q_FUNC_INFO << dev.deviceName();
             m_availableDevices.insert(dev.deviceName(), dev);
         }
     }
@@ -127,40 +127,40 @@ SynthController::initAudioDevices()
     m_audioDevice = mediaDevices.defaultAudioOutput();
     foreach(auto &dev, devices) {
         if (dev.isFormatSupported(m_format)) {
-            qDebug() << Q_FUNC_INFO << dev.description();
+            //qDebug() << Q_FUNC_INFO << dev.description();
             m_availableDevices.insert(dev.description(), dev);
         }
     }
 #endif
-    qDebug() << Q_FUNC_INFO << audioDeviceName();
+    //qDebug() << Q_FUNC_INFO << audioDeviceName();
 }
 
 #if QT_VERSION < QT_VERSION_CHECK(6,0,0)
 const QAudioDeviceInfo&
 SynthController::audioDevice() const
 {
-    qDebug() << Q_FUNC_INFO;
+    //qDebug() << Q_FUNC_INFO;
     return m_audioDevice;
 }
 
 void
 SynthController::setAudioDevice(const QAudioDeviceInfo &newAudioDevice)
 {
-    qDebug() << Q_FUNC_INFO;
+    //qDebug() << Q_FUNC_INFO;
     m_audioDevice = newAudioDevice;
 }
 #else
 const QAudioDevice&
 SynthController::audioDevice() const
 {
-    qDebug() << Q_FUNC_INFO;
+    //qDebug() << Q_FUNC_INFO;
     return m_audioDevice;
 }
 
 void
 SynthController::setAudioDevice(const QAudioDevice &newAudioDevice)
 {
-    qDebug() << Q_FUNC_INFO;
+    //qDebug() << Q_FUNC_INFO;
     m_audioDevice = newAudioDevice;
 }
 #endif
@@ -168,14 +168,14 @@ SynthController::setAudioDevice(const QAudioDevice &newAudioDevice)
 QStringList
 SynthController::availableAudioDevices() const
 {
-    qDebug() << Q_FUNC_INFO;
+    //qDebug() << Q_FUNC_INFO;
     return m_availableDevices.keys();
 }
 
 QString
 SynthController::audioDeviceName() const
 {
-    qDebug() << Q_FUNC_INFO;
+    //qDebug() << Q_FUNC_INFO;
 #if QT_VERSION < QT_VERSION_CHECK(6,0,0)
     return m_audioDevice.deviceName();
 #else
@@ -198,7 +198,7 @@ SynthController::setAudioDeviceName(const QString newName)
 
 void SynthController::setBufferSize(int milliseconds)
 {
-    qDebug() << Q_FUNC_INFO << milliseconds;
+    //qDebug() << Q_FUNC_INFO << milliseconds;
     if (milliseconds != m_requestedBufferTime) {
         stop();
         m_requestedBufferTime = milliseconds;
@@ -208,7 +208,7 @@ void SynthController::setBufferSize(int milliseconds)
 
 void SynthController::setVolume(int volume)
 {
-    qDebug() << Q_FUNC_INFO << volume;
+    //qDebug() << Q_FUNC_INFO << volume;
     qreal linearVolume = QAudio::convertVolume(volume / 100.0,
                                                QAudio::LogarithmicVolumeScale,
                                                QAudio::LinearVolumeScale);

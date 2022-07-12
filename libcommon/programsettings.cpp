@@ -52,7 +52,7 @@ ProgramSettings* ProgramSettings::instance()
 
 void ProgramSettings::ResetDefaults()
 {
-    qDebug() << Q_FUNC_INFO;
+    //qDebug() << Q_FUNC_INFO;
     m_bufferTime = DEFAULT_BUFFER_TIME;
     m_reverbType = DEFAULT_REVERB_TYPE;
     m_reverbWet = DEFAULT_REVERB_WET;
@@ -90,7 +90,7 @@ void ProgramSettings::SaveToFile(const QString& filepath)
 
 void ProgramSettings::internalRead(QSettings &settings)
 {
-    qDebug() << Q_FUNC_INFO;
+    //qDebug() << Q_FUNC_INFO;
     m_midiDriver = settings.value("MIDIDriver", DEFAULT_MIDI_DRIVER).toString();
     m_portName = settings.value("PortName", QString()).toString();
     m_bufferTime = settings.value("BufferTime", DEFAULT_BUFFER_TIME).toInt();
@@ -106,7 +106,7 @@ void ProgramSettings::internalRead(QSettings &settings)
 
 void ProgramSettings::internalSave(QSettings &settings)
 {
-    qDebug() << Q_FUNC_INFO;
+    //qDebug() << Q_FUNC_INFO;
     settings.setValue("MIDIDriver", m_midiDriver);
     settings.setValue("PortName", m_portName);
     settings.setValue("BufferTime", m_bufferTime);

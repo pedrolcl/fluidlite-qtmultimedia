@@ -33,24 +33,23 @@ MainWindow::MainWindow(QWidget *parent) :
     m_synth->renderer()->subscribe(ProgramSettings::instance()->portName());
     m_synth->setAudioDeviceName(ProgramSettings::instance()->audioDeviceName());
 
-    connect(m_synth.get(), &SynthController::underrunDetected, this, &MainWindow::underrunMessage);
-    connect(m_synth.get(), &SynthController::stallDetected, this, &MainWindow::stallMessage);
-
     m_ui->setupUi(this);
+
+    m_ui->combo_MIDI->addItems(m_synth->renderer()->connections());
+    m_ui->combo_Audio->addItems(m_synth->availableAudioDevices());
     m_ui->combo_Reverb->addItem(QStringLiteral("Preset 1"), 1);
     m_ui->combo_Reverb->addItem(QStringLiteral("Preset 2"), 2);
     m_ui->combo_Reverb->addItem(QStringLiteral("Preset 3"), 3);
     m_ui->combo_Reverb->addItem(QStringLiteral("Preset 4"), 4);
+    m_ui->combo_Reverb->addItem(QStringLiteral("Preset 5"), 5);
     m_ui->combo_Reverb->addItem(QStringLiteral("None"), 0);
     m_ui->combo_Reverb->setCurrentIndex(4);
-
-    m_ui->combo_Chorus->addItem(QStringLiteral("Preset 1"), 1);
-    m_ui->combo_Chorus->addItem(QStringLiteral("Preset 2"), 2);
-    m_ui->combo_Chorus->addItem(QStringLiteral("Preset 3"), 3);
-    m_ui->combo_Chorus->addItem(QStringLiteral("Preset 4"), 4);
+    m_ui->combo_Chorus->addItem(QStringLiteral("Active"), 1);
     m_ui->combo_Chorus->addItem(QStringLiteral("None"), 0);
-    m_ui->combo_Chorus->setCurrentIndex(4);
+    m_ui->combo_Chorus->setCurrentIndex(1);
 
+    connect(m_synth.get(), &SynthController::underrunDetected, this, &MainWindow::underrunMessage);
+    connect(m_synth.get(), &SynthController::stallDetected, this, &MainWindow::stallMessage);
     connect(m_ui->slider_Volume, &QSlider::valueChanged, this, &MainWindow::volumeChanged);
     connect(m_ui->spin_Buffer, SIGNAL(valueChanged(int)), this, SLOT(bufferSizeChanged(int)));
     connect(m_ui->spin_Octave, SIGNAL(valueChanged(int)), this, SLOT(octaveChanged(int)));
@@ -78,9 +77,7 @@ MainWindow::~MainWindow()
 void
 MainWindow::initialize()
 {
-    m_ui->combo_MIDI->addItems(m_synth->renderer()->connections());
     m_ui->combo_MIDI->setCurrentText(ProgramSettings::instance()->portName());
-    m_ui->combo_Audio->addItems(m_synth->availableAudioDevices());
     m_ui->combo_Audio->setCurrentText(m_synth->audioDeviceName());
     m_ui->spin_Buffer->setValue(ProgramSettings::instance()->bufferTime());
     int reverb = m_ui->combo_Reverb->findData(ProgramSettings::instance()->reverbType());
@@ -94,6 +91,7 @@ MainWindow::initialize()
     QFont f = QApplication::font();
     f.setPointSize(72);
     m_ui->pianoKeybd->setFont(f);
+    readFile(ProgramSettings::instance()->soundFontFile());
     m_synth->start();
 }
 

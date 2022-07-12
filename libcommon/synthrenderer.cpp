@@ -33,7 +33,7 @@ SynthRenderer::SynthRenderer(QObject *parent):
     m_input(nullptr),
     m_lastBufferSize(0)
 {
-    qDebug() << Q_FUNC_INFO;
+    //qDebug() << Q_FUNC_INFO;
     initMIDI();
     initSynth();
 }
@@ -41,7 +41,7 @@ SynthRenderer::SynthRenderer(QObject *parent):
 void
 SynthRenderer::initMIDI()
 {
-    qDebug() << Q_FUNC_INFO << ProgramSettings::DEFAULT_MIDI_DRIVER;
+    //qDebug() << Q_FUNC_INFO << ProgramSettings::DEFAULT_MIDI_DRIVER;
     if (m_midiDriver.isEmpty()) {
         setMidiDriver(ProgramSettings::DEFAULT_MIDI_DRIVER);
     }
@@ -91,7 +91,7 @@ SynthRenderer::~SynthRenderer()
     }
     delete_fluid_synth(m_synth);
     delete_fluid_settings(m_settings);
-    qDebug() << Q_FUNC_INFO;
+    //qDebug() << Q_FUNC_INFO;
 }
 
 qint64 SynthRenderer::readData(char *data, qint64 maxlen)
@@ -119,7 +119,7 @@ qint64 SynthRenderer::writeData(const char *data, qint64 len)
 {
     Q_UNUSED(data);
     Q_UNUSED(len);
-    qDebug() << Q_FUNC_INFO;
+    //qDebug() << Q_FUNC_INFO;
 	return 0;
 }
 
@@ -138,7 +138,7 @@ qint64 SynthRenderer::bytesAvailable() const
 bool
 SynthRenderer::stopped()
 {
-    qDebug() << Q_FUNC_INFO;
+    //qDebug() << Q_FUNC_INFO;
     return !isOpen();
 }
 
@@ -161,6 +161,7 @@ SynthRenderer::stop()
 QStringList 
 SynthRenderer::connections() const
 {
+    //qDebug() << Q_FUNC_INFO;
     Q_ASSERT(m_input != nullptr);
     QStringList result;
     auto avail = m_input->connections(true);
@@ -173,25 +174,30 @@ SynthRenderer::connections() const
 QString 
 SynthRenderer::subscription() const
 {
+    //qDebug() << Q_FUNC_INFO << m_portName;
     return m_portName;
 }
 
 void
 SynthRenderer::subscribe(const QString& portName)
 {
-    //qDebug() << Q_FUNC_INFO << portName;
-    Q_ASSERT(m_input != nullptr);
-    auto avail = m_input->connections(true);
-    auto it = std::find_if(avail.constBegin(), avail.constEnd(),
-                           [portName](const MIDIConnection& c) { 
-                               return c.first == portName; 
-                           });
-    m_input->close();
-    if (it == avail.constEnd()) {
-        MIDIConnection conn;
-        m_input->open(conn);
-    } else {
-        m_input->open(*it);
+    if (portName != m_portName) {
+        //qDebug() << Q_FUNC_INFO << portName;
+        Q_ASSERT(m_input != nullptr);
+        auto avail = m_input->connections(true);
+        auto it = std::find_if(avail.constBegin(), avail.constEnd(),
+                               [portName](const MIDIConnection& c) { 
+                                   return c.first == portName; 
+                               });
+        m_input->close();
+        if (it == avail.constEnd()) {
+            MIDIConnection conn;
+            m_input->open(conn);
+            m_portName = conn.first;
+        } else {
+            m_input->open(*it);
+            m_portName = (*it).first;
+        }
     }
 }
 
@@ -272,25 +278,61 @@ void SynthRenderer::pitchBend(const int chan, const int value)
 void
 SynthRenderer::initReverb(int reverb_type)
 {
-    Q_UNUSED(reverb_type)
+    //qDebug() << Q_FUNC_INFO << reverb_type;
+    switch( reverb_type ) {
+    case 1:
+        fluid_synth_set_reverb(m_synth, 0.2, 0.0, 0.5, 0.9);
+        break;
+    case 2:
+        fluid_synth_set_reverb(m_synth, 0.4, 0.2, 0.5, 0.8);
+        break;
+    case 3:
+        fluid_synth_set_reverb(m_synth, 0.6, 0.4, 0.5, 0.7);
+        break;
+    case 4:
+        fluid_synth_set_reverb(m_synth, 0.8, 0.7, 0.5, 0.6);
+        break;
+    case 5:
+        fluid_synth_set_reverb(m_synth, 0.8, 1.0, 0.5, 0.5);
+        break;
+    };
+    fluid_synth_set_reverb_on(m_synth, reverb_type);
 }
 
 void
 SynthRenderer::initChorus(int chorus_type)
 {
-    Q_UNUSED(chorus_type)
+    //qDebug() << Q_FUNC_INFO << chorus_type;
+    fluid_synth_set_chorus_on(m_synth, chorus_type);
 }
 
 void
 SynthRenderer::setReverbWet(int amount)
 {
-    Q_UNUSED(amount)
+    qreal newlevel = amount / 100.0;
+    qreal level = fluid_synth_get_reverb_level(m_synth);
+    //qDebug() << Q_FUNC_INFO << level << newlevel;
+    if (newlevel != level) {
+        qreal roomsize = fluid_synth_get_reverb_roomsize(m_synth); 
+        qreal damping = fluid_synth_get_reverb_damp(m_synth);
+        qreal width = fluid_synth_get_reverb_width(m_synth); 
+        fluid_synth_set_reverb(m_synth, roomsize, damping, width, newlevel);
+    }
 }
 
 void
 SynthRenderer::setChorusLevel(int amount)
 {
-    Q_UNUSED(amount)
+    qreal newlevel = amount / 100.0;
+    qreal level = fluid_synth_get_chorus_level(m_synth);
+    //qDebug() << Q_FUNC_INFO << level << newlevel;
+    if (newlevel != level) {
+        int nr = fluid_synth_get_chorus_nr(m_synth);
+        qreal speed = fluid_synth_get_chorus_speed_Hz(m_synth);
+        qreal depth = fluid_synth_get_chorus_depth_ms(m_synth);
+        int type = fluid_synth_get_chorus_type(m_synth);
+        fluid_synth_set_chorus(m_synth, nr, newlevel, speed, depth, type);
+    }
 }
 
 void
