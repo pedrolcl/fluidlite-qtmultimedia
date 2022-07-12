@@ -47,12 +47,21 @@ private slots:
     void chorusTypeChanged(int index);
     void reverbChanged(int value);
     void chorusChanged(int value);
+    void deviceChanged(int value);
+    void subscriptionChanged(int value);
+    void bufferSizeChanged(int value);
+    void octaveChanged(int value);
+    void volumeChanged(int value);
     void openFile();
     void underrunMessage();
     void stallMessage();
+    void noteOn( int midiNote, int vel );
+    void noteOff( int midiNote, int vel );
+    void showNoteOn( int midiNote, int vel );
+    void showNoteOff( int midiNote, int vel );
 
 private:
-    Ui::MainWindow *ui;
+    Ui::MainWindow *m_ui;
     QScopedPointer<SynthController> m_synth;
     QString m_sf2File;
 };

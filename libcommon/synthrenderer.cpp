@@ -145,14 +145,14 @@ SynthRenderer::stopped()
 void
 SynthRenderer::start()
 {
-    qDebug() << Q_FUNC_INFO;
+    //qDebug() << Q_FUNC_INFO;
     open(QIODevice::ReadOnly | QIODevice::Unbuffered);
 }
 
 void
 SynthRenderer::stop()
 {
-    qDebug() << Q_FUNC_INFO;
+    //qDebug() << Q_FUNC_INFO;
     if (isOpen()) {
         close();
     }
@@ -179,7 +179,7 @@ SynthRenderer::subscription() const
 void
 SynthRenderer::subscribe(const QString& portName)
 {
-    qDebug() << Q_FUNC_INFO << portName;
+    //qDebug() << Q_FUNC_INFO << portName;
     Q_ASSERT(m_input != nullptr);
     auto avail = m_input->connections(true);
     auto it = std::find_if(avail.constBegin(), avail.constEnd(),
@@ -198,7 +198,7 @@ SynthRenderer::subscribe(const QString& portName)
 const QString 
 SynthRenderer::midiDriver() const
 {
-    qDebug() << Q_FUNC_INFO << m_midiDriver;
+    //qDebug() << Q_FUNC_INFO << m_midiDriver;
     return m_midiDriver;
 }
 
@@ -206,7 +206,7 @@ void
 SynthRenderer::setMidiDriver(const QString newMidiDriver)
 {
     if (m_midiDriver != newMidiDriver) {
-        qDebug() << Q_FUNC_INFO << newMidiDriver;
+        //qDebug() << Q_FUNC_INFO << newMidiDriver;
         m_midiDriver = newMidiDriver;
         if (m_input != nullptr) {
             m_input->disconnect();
@@ -225,17 +225,18 @@ SynthRenderer::setMidiDriver(const QString newMidiDriver)
     }
 }
 
-void SynthRenderer::noteOn(int chan, int note, int vel) 
+void SynthRenderer::noteOn(const int chan, const int note, const int vel)
 {
-    qDebug() << Q_FUNC_INFO << chan << note << vel;
+    //qDebug() << Q_FUNC_INFO << chan << note << vel;
     fluid_synth_noteon(m_synth, chan, note, vel);
+    emit midiNoteOn(note, vel);
 }
 
-void SynthRenderer::noteOff(int chan, int note, int vel) 
+void SynthRenderer::noteOff(const int chan, const int note, const int vel)
 {
-    Q_UNUSED(vel)
-    qDebug() << Q_FUNC_INFO << chan << note;
+    //qDebug() << Q_FUNC_INFO << chan << note;
     fluid_synth_noteoff(m_synth, chan, note);
+    emit midiNoteOff(note, vel);
 }
 
 void SynthRenderer::keyPressure(const int chan, const int note, const int value) 
@@ -295,7 +296,7 @@ SynthRenderer::setChorusLevel(int amount)
 void
 SynthRenderer::openSoundfont(const QString fileName)
 {
-    qDebug() << Q_FUNC_INFO << fileName;
+    //qDebug() << Q_FUNC_INFO << fileName;
     m_file = fileName;
     if (m_synth != nullptr) {
         auto result = fluid_synth_sfload(m_synth, fileName.toLocal8Bit(), 1);

@@ -18,6 +18,7 @@ add_executable( fluidlite-guisynth
 target_link_libraries( fluidlite-guisynth PRIVATE
   Qt${QT_VERSION_MAJOR}::Widgets
   Drumstick::RT
+  Drumstick::Widgets
   fluidlite-libcommon
 )
 

@@ -17,7 +17,7 @@ if ((CMAKE_SYSTEM_NAME MATCHES "Linux") AND (QT_VERSION_MAJOR EQUAL 6) AND (QT_V
     message(WARNING "Unsupported Qt version ${QT_VERSION} for system ${CMAKE_SYSTEM_NAME}")
 endif()
 find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Core Gui Widgets Multimedia REQUIRED)
-find_package(Drumstick 2.6 COMPONENTS RT REQUIRED)
+find_package(Drumstick 2.6 COMPONENTS RT Widgets REQUIRED)
 
 include(GNUInstallDirs)
 
@@ -25,7 +25,7 @@ add_subdirectory(FluidLite)
 if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/FluidLite/aliases.cmake)
     include(${CMAKE_CURRENT_SOURCE_DIR}/FluidLite/aliases.cmake)
 else()
-    message(FATAL_ERROR "Missing file 'aliases.cmake'. Use: 'git submodule update'")
+    message(FATAL_ERROR "Missing file 'FluidLite/aliases.cmake'. Use: 'git submodule update'")
 endif()
 
 add_subdirectory(libcommon)

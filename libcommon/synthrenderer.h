@@ -67,15 +67,19 @@ public:
     qint64 lastBufferSize() const;
     void resetLastBufferSize();
 
+signals:
+    void midiNoteOn(const int note, const int vel);
+    void midiNoteOff(const int note, const int vel);
+
 public slots:
-    void noteOn(int chan, int note, int vel);
-    void noteOff(int chan, int note, int vel);
+    void noteOn(const int chan, const int note, const int vel);
+    void noteOff(const int chan, const int note, const int vel);
     void keyPressure(const int chan, const int note, const int value);
     void controller(const int chan, const int control, const int value);
     void program(const int chan, const int program);
     void channelPressure(const int chan, const int value);
     void pitchBend(const int chan, const int value);
-    
+
 private:
     void initMIDI();
     void initSynth();
