@@ -18,6 +18,7 @@
 
 #include <QCloseEvent>
 #include <QFileDialog>
+#include <QMessageBox>
 #include "mainwindow.h"
 #include "programsettings.h"
 #include "ui_mainwindow.h"
@@ -26,10 +27,12 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
-    m_synth = new SynthController(ProgramSettings::instance()->bufferTime(), this);
+    m_synth.reset(new SynthController(ProgramSettings::instance()->bufferTime()));
     m_synth->renderer()->setMidiDriver(ProgramSettings::instance()->midiDriver());
     m_synth->renderer()->subscribe(ProgramSettings::instance()->portName());
-    m_synth->renderer()->setAudioDeviceName(ProgramSettings::instance()->audioDeviceName());
+    m_synth->setAudioDeviceName(ProgramSettings::instance()->audioDeviceName());
+    connect(m_synth.get(), &SynthController::underrunDetected, this, &MainWindow::underrunMessage);
+    connect(m_synth.get(), &SynthController::stallDetected, this, &MainWindow::stallMessage);
 
     ui->setupUi(this);
     ui->combo_Reverb->addItem(QStringLiteral("Preset 1"), 1);
@@ -57,6 +60,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
+    m_synth->stop();
     delete ui;
 }
 
@@ -71,7 +75,7 @@ MainWindow::initialize()
     int chorus = ui->combo_Chorus->findData(ProgramSettings::instance()->chorusType());
     ui->combo_Chorus->setCurrentIndex(chorus);
     ui->dial_Chorus->setValue(ProgramSettings::instance()->chorusLevel());
-    ui->audioOutput->setText( m_synth->renderer()->audioDeviceName() );
+    ui->audioOutput->setText( m_synth->audioDeviceName() );
     m_synth->start();
 }
 
@@ -164,4 +168,24 @@ MainWindow::openFile()
     } else {
         readFile(songFile);
     }
+}
+
+void MainWindow::underrunMessage()
+{
+    static bool showing = false;
+    if (!showing) {
+        showing = true;
+        QMessageBox::warning( this, "Underrun Error",
+                              "Audio buffer underrun errors have been detected."
+                              " Please increase the buffer time to avoid this problem.");
+        showing = false;
+    }
+}
+
+void MainWindow::stallMessage()
+{
+    QMessageBox::critical( this, "Audio Output Stalled",
+                           "Audio output is stalled right now. Sound cannot be produced."
+                           " Please increase the buffer time to avoid this problem.");
+    m_synth->stop();
 }

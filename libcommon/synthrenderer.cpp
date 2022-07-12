@@ -17,123 +17,76 @@
 */
 
 #include <QObject>
+#include <QDebug>
 #include <QString>
 #include <QCoreApplication>
 #include <QTextStream>
-#include <QtDebug>
-#include <QReadLocker>
-#include <QWriteLocker>
 #include <drumstick/sequencererror.h>
+#include "programsettings.h"
 #include "synthrenderer.h"
 #include "programsettings.h"
 
 using namespace drumstick::rt;
 
-SynthRenderer::SynthRenderer(int bufTime, QObject *parent) : QObject(parent),
-    m_Stopped(true),
+SynthRenderer::SynthRenderer(QObject *parent):
+    QIODevice(parent),
     m_input(nullptr),
-    m_sf2loaded(false), 
-	m_requestedBufferTime(bufTime)
+    m_lastBufferSize(0)
 {
-    qDebug() << Q_FUNC_INFO << bufTime;
+    qDebug() << Q_FUNC_INFO;
     initMIDI();
     initSynth();
-    initAudioDevices();
 }
 
 void
 SynthRenderer::initMIDI()
 {
-    const QString DEFAULT_DRIVER = 
-#if defined(Q_OS_LINUX)
-        QStringLiteral("ALSA");
-#elif defined(Q_OS_WINDOWS)
-        QStringLiteral("Windows MM");
-#elif defined(Q_OS_MACOS)
-        QStringLiteral("CoreMIDI");
-#elif defined(Q_OS_UNIX)
-        QStringLiteral("OSS");
-#else
-        QStringLiteral("Network");
-#endif
-    qDebug() << Q_FUNC_INFO << DEFAULT_DRIVER;
+    qDebug() << Q_FUNC_INFO << ProgramSettings::DEFAULT_MIDI_DRIVER;
     if (m_midiDriver.isEmpty()) {
-        setMidiDriver(DEFAULT_DRIVER);
+        setMidiDriver(ProgramSettings::DEFAULT_MIDI_DRIVER);
     }
     if (m_input == nullptr) {
-        qWarning() << "Input Backend is Missing. You may need to set the DRUMSTICKRT environment variable";
+        qWarning() << Q_FUNC_INFO << "Input Backend is Missing. You may need to set the DRUMSTICKRT environment variable";    
     }
 }
+
+const int SynthRenderer::DEFAULT_SAMPLE_RATE = 44100;
+const int SynthRenderer::DEFAULT_RENDERING_FRAMES = 64;
+const int SynthRenderer::DEFAULT_FRAME_CHANNELS = 2;
 
 void
 SynthRenderer::initSynth()
 {
-    m_sampleRate = 44100;
-    m_bufferSize = 64;
-    m_channels = 2;
+    m_sampleRate = DEFAULT_SAMPLE_RATE;
+    m_renderingFrames = DEFAULT_RENDERING_FRAMES;
+    m_channels = DEFAULT_FRAME_CHANNELS;
     m_sample_size = sizeof(float) * CHAR_BIT;
-   
+
     /* FluidLite initialization */
     m_settings = new_fluid_settings();
-    fluid_settings_setnum(m_settings, "synth.gain", 1.2);
+    fluid_settings_setnum(m_settings, "synth.sample-rate", m_sampleRate);
+    fluid_settings_setnum(m_settings, "synth.gain", 1.0);
     m_synth = new_fluid_synth(m_settings);
-    qDebug() << Q_FUNC_INFO << "bufferSize=" << m_bufferSize << " sampleRate=" << m_sampleRate << " channels=" << m_channels;
-}
+    qDebug() << Q_FUNC_INFO << "synthesis frames:" << m_renderingFrames << "sample rate:" << m_sampleRate << "audio channels:" << m_channels;
 
-void
-SynthRenderer::initAudio()
-{
-    QAudioFormat format;
-    format.setSampleRate(m_sampleRate);
-    format.setChannelCount(m_channels);
+    /* QAudioFormat initialization */
+    m_format.setSampleRate(m_sampleRate);
+    m_format.setChannelCount(m_channels);
 #if QT_VERSION < QT_VERSION_CHECK(6,0,0)
-    format.setSampleSize(m_sample_size);
-    format.setCodec("audio/pcm");
-    format.setSampleType(QAudioFormat::Float);
+    m_format.setSampleSize(m_sample_size);
+    m_format.setCodec("audio/pcm");
+    m_format.setSampleType(QAudioFormat::Float);
+    m_format.setByteOrder(QAudioFormat::LittleEndian);
 #else
-    format.setSampleFormat(QAudioFormat::Float);
+    m_format.setSampleFormat(QAudioFormat::Float);
+    m_format.setChannelConfig(QAudioFormat::ChannelConfigStereo);
 #endif
-
-    if (!m_audioDevice.isFormatSupported(format)) {
-        qCritical() << "Audio format not supported" << format;
-        return;
-    }
-
-    qint64 requested_size = m_channels * (m_sample_size / CHAR_BIT) * m_requestedBufferTime * m_sampleRate / 1000;
-    qint64 period_bytes = m_channels * (m_sample_size / CHAR_BIT) * m_bufferSize;
-    qDebug() << Q_FUNC_INFO << "requested buffer sizes:" << period_bytes << requested_size;
-
-#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
-    m_audioOutput.reset(new QAudioOutput(m_audioDevice, format));
-    m_audioOutput->setCategory("MIDI Synthesizer");
-    QObject::connect(m_audioOutput.data(), &QAudioOutput::stateChanged, this, [](QAudio::State state){
-#else
-    m_audioOutput.reset(new QAudioSink(m_audioDevice, format));
-    QObject::connect(m_audioOutput.data(), &QAudioSink::stateChanged, this, [](QAudio::State state){
-#endif
-        qDebug() << "Audio Output state changed:" << state;
-    });
-    m_audioOutput->setBufferSize( qMax(period_bytes, requested_size) );
-}
-
-void SynthRenderer::initAudioDevices()
-{
-#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
-    m_availableDevices = QAudioDeviceInfo::availableDevices(QAudio::AudioOutput);
-    m_audioDevice = QAudioDeviceInfo::defaultOutputDevice();
-#else
-    QMediaDevices devices;
-    m_availableDevices = devices.audioOutputs();
-    m_audioDevice = devices.defaultAudioOutput();
-#endif
-    /*foreach(auto &dev, m_availableDevices) {
-        qDebug() << Q_FUNC_INFO << dev.deviceName();
-    }*/
 }
 
 SynthRenderer::~SynthRenderer()
 {
     if (m_input != nullptr) {
+        m_input->disconnect();
         m_input->close();
     }
     delete_fluid_synth(m_synth);
@@ -141,19 +94,68 @@ SynthRenderer::~SynthRenderer()
     qDebug() << Q_FUNC_INFO;
 }
 
+qint64 SynthRenderer::readData(char *data, qint64 maxlen)
+{
+    //qDebug() << Q_FUNC_INFO << "starting with maxlen:" << maxlen;
+    const qint64 bufferSamples = m_renderingFrames * m_channels;
+    const qint64 bufferBytes = bufferSamples * sizeof(float);
+    Q_ASSERT(bufferBytes > 0 && bufferBytes <= maxlen);
+    qint64 buflen = (maxlen / bufferBytes) * bufferBytes;
+    qint64 length = buflen;
+    
+    float *buffer = reinterpret_cast<float *>(data);
+    while (length > 0) {
+        fluid_synth_write_float(m_synth, m_renderingFrames, buffer, 0, m_channels, buffer, 1, m_channels);
+        length -= bufferBytes;
+        buffer += bufferSamples;
+    }
+
+    m_lastBufferSize = buflen;
+    //qDebug() << Q_FUNC_INFO << "before returning" << buflen;
+    return buflen;
+}
+
+qint64 SynthRenderer::writeData(const char *data, qint64 len)
+{
+    Q_UNUSED(data);
+    Q_UNUSED(len);
+    qDebug() << Q_FUNC_INFO;
+	return 0;
+}
+
+qint64 SynthRenderer::size() const
+{
+    //qDebug() << Q_FUNC_INFO;
+    return std::numeric_limits<qint64>::max();
+}
+
+qint64 SynthRenderer::bytesAvailable() const
+{
+    //qDebug() << Q_FUNC_INFO;
+    return std::numeric_limits<qint64>::max();
+}
+
 bool
 SynthRenderer::stopped()
 {
-	QReadLocker locker(&m_mutex);
-    return m_Stopped;
+    qDebug() << Q_FUNC_INFO;
+    return !isOpen();
+}
+
+void
+SynthRenderer::start()
+{
+    qDebug() << Q_FUNC_INFO;
+    open(QIODevice::ReadOnly | QIODevice::Unbuffered);
 }
 
 void
 SynthRenderer::stop()
 {
-	QWriteLocker locker(&m_mutex);
     qDebug() << Q_FUNC_INFO;
-    m_Stopped = true;
+    if (isOpen()) {
+        close();
+    }
 }
 
 QStringList 
@@ -193,15 +195,25 @@ SynthRenderer::subscribe(const QString& portName)
     }
 }
 
-void
-SynthRenderer::run()
+const QString 
+SynthRenderer::midiDriver() const
 {
-    QByteArray audioData;
-    initAudio();
-    qDebug() << Q_FUNC_INFO << "started";
-    try {
+    qDebug() << Q_FUNC_INFO << m_midiDriver;
+    return m_midiDriver;
+}
+
+void 
+SynthRenderer::setMidiDriver(const QString newMidiDriver)
+{
+    if (m_midiDriver != newMidiDriver) {
+        qDebug() << Q_FUNC_INFO << newMidiDriver;
+        m_midiDriver = newMidiDriver;
         if (m_input != nullptr) {
             m_input->disconnect();
+            m_input->close();
+        }
+        m_input = m_man.inputBackendByName(m_midiDriver);
+        if (m_input != nullptr) {
             QObject::connect(m_input, &MIDIInput::midiNoteOn, this, &SynthRenderer::noteOn);
             QObject::connect(m_input, &MIDIInput::midiNoteOff, this, &SynthRenderer::noteOff);
             QObject::connect(m_input, &MIDIInput::midiKeyPressure, this, &SynthRenderer::keyPressure);
@@ -210,136 +222,19 @@ SynthRenderer::run()
             QObject::connect(m_input, &MIDIInput::midiChannelPressure, this, &SynthRenderer::channelPressure);
             QObject::connect(m_input, &MIDIInput::midiPitchBend, this, &SynthRenderer::pitchBend);
         }
-        if (m_synth != nullptr && !m_sf2loaded) {
-            openSoundfont(ProgramSettings::instance()->soundFontFile());
-        }
-        m_Stopped = false;
-        QIODevice *iodevice = m_audioOutput->start();
-        qDebug() << "Audio Output started with buffer size =" << m_audioOutput->bufferSize() << "bytesfree= " << m_audioOutput->bytesFree();
-        audioData.reserve(m_audioOutput->bufferSize());
-        while (!stopped()) {
-            QCoreApplication::sendPostedEvents();
-            if (m_audioOutput->state() == QAudio::SuspendedState || 
-                m_audioOutput->state() == QAudio::StoppedState) {
-                qDebug() << Q_FUNC_INFO << "leaving";
-                break;
-            }
-            if (m_synth != 0)
-            {
-                // synth audio rendering
-                int maxlen = m_audioOutput->bufferSize();
-                while(audioData.size() < maxlen) {
-                    int bytes = m_bufferSize * sizeof(float) * m_channels;
-                    char buffer[bytes];
-                    fluid_synth_write_float(m_synth, m_bufferSize, buffer, 0, m_channels, buffer, 1, m_channels);
-                    audioData.append(buffer, bytes);
-                }
-                // hand over to audiooutput, pushing the rendered buffer
-                maxlen = qMin(maxlen, m_audioOutput->bytesFree());
-                int written = iodevice->write(audioData, maxlen);
-                if (written < 0 || m_audioOutput->error() != QAudio::NoError) {
-                    qWarning() << Q_FUNC_INFO << "write audio error:" << m_audioOutput->error();
-                    break;
-                } else if (written > 0) {
-                    //qDebug() << Q_FUNC_INFO << written;
-                    audioData.remove(0, written);
-                }
-            }
-        }
-        m_audioOutput->stop();
-        qDebug() << "QAudioOutput stopped";
-    } catch (...) {
-        qWarning() << "Error! exception";
-    }
-    qDebug() << Q_FUNC_INFO << "ended";
-    emit finished();
-}
-
-const QString SynthRenderer::midiDriver() const
-{
-    return m_midiDriver;
-}
-
-void SynthRenderer::setMidiDriver(const QString newMidiDriver)
-{
-    if (m_midiDriver != newMidiDriver) {
-        m_midiDriver = newMidiDriver;
-        if (m_input != nullptr) {
-            m_input->close();
-        }
-        m_input = m_man.inputBackendByName(m_midiDriver);
-    }
-}
-
-#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
-const QAudioDeviceInfo &SynthRenderer::audioDevice() const
-{
-    return m_audioDevice;
-}
-
-void SynthRenderer::setAudioDevice(const QAudioDeviceInfo &newAudioDevice)
-{
-    m_audioDevice = newAudioDevice;
-}
-#else
-const QAudioDevice &SynthRenderer::audioDevice() const
-{
-    return m_audioDevice;
-}
-
-void SynthRenderer::setAudioDevice(const QAudioDevice &newAudioDevice)
-{
-    m_audioDevice = newAudioDevice;
-}
-#endif
-
-
-QStringList SynthRenderer::availableAudioDevices() const
-{
-    QStringList result;
-    foreach(const auto &device, m_availableDevices) {
-    #if QT_VERSION < QT_VERSION_CHECK(6,0,0)
-        result << device.deviceName();
-    #else
-        result << device.description();
-    #endif
-    }
-    return result;
-}
-
-QString SynthRenderer::audioDeviceName() const
-{
-#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
-    return m_audioDevice.deviceName();
-#else
-    return m_audioDevice.description();
-#endif
-}
-
-void SynthRenderer::setAudioDeviceName(const QString newName)
-{
-    foreach(auto device, m_availableDevices) {
-#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
-        if (device.deviceName() == newName) {
-#else
-        if (device.description() == newName) {
-#endif
-            m_audioDevice = device;
-            break;
-        }
     }
 }
 
 void SynthRenderer::noteOn(int chan, int note, int vel) 
 {
-    //qDebug() << Q_FUNC_INFO << chan << note << vel;
+    qDebug() << Q_FUNC_INFO << chan << note << vel;
     fluid_synth_noteon(m_synth, chan, note, vel);
 }
 
 void SynthRenderer::noteOff(int chan, int note, int vel) 
 {
     Q_UNUSED(vel)
-    //qDebug() << Q_FUNC_INFO << chan << note;
+    qDebug() << Q_FUNC_INFO << chan << note;
     fluid_synth_noteoff(m_synth, chan, note);
 }
 
@@ -406,4 +301,20 @@ SynthRenderer::openSoundfont(const QString fileName)
         auto result = fluid_synth_sfload(m_synth, fileName.toLocal8Bit(), 1);
         m_sf2loaded = result != -1;
     }
+}
+
+qint64 SynthRenderer::lastBufferSize() const
+{
+    return m_lastBufferSize;
+}
+
+void SynthRenderer::resetLastBufferSize()
+{
+    m_lastBufferSize = 0;
+}
+
+const QAudioFormat&
+SynthRenderer::format() const
+{
+    return m_format;
 }

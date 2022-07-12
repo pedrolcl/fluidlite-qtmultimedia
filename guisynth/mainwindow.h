@@ -20,6 +20,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QScopedPointer>
 #include "synthcontroller.h"
 
 namespace Ui {
@@ -47,10 +48,12 @@ private slots:
     void reverbChanged(int value);
     void chorusChanged(int value);
     void openFile();
+    void underrunMessage();
+    void stallMessage();
 
 private:
     Ui::MainWindow *ui;
-    SynthController *m_synth;
+    QScopedPointer<SynthController> m_synth;
     QString m_sf2File;
 };
 

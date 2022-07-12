@@ -20,59 +20,52 @@
 #define SYNTHRENDERER_H_
 
 #include <QObject>
-#include <QReadWriteLock>
+#include <QIODevice>
 #include <QScopedPointer>
-#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
-#include <QAudioOutput>
-#else
-#include <QAudioSink>
-#include <QAudioDevice>
-#include <QMediaDevices>
-#endif
+#include <QAudioFormat>
 #include <drumstick/backendmanager.h>
 #include <drumstick/rtmidiinput.h>
 #include <fluidlite.h>
 
-class SynthRenderer : public QObject
+class SynthRenderer : public QIODevice
 {
     Q_OBJECT
 
 public:
-    explicit SynthRenderer(int bufTime, QObject *parent = 0);
+    explicit SynthRenderer(QObject *parent = 0);
     virtual ~SynthRenderer();
 
+    /* QIODevice */
+    qint64 readData(char *data, qint64 maxlen) override;
+    qint64 writeData(const char *data, qint64 len) override;
+	qint64 size() const override;
+	qint64 bytesAvailable() const override;
+
+    /* Drumstick::RT */
+    const QString midiDriver() const;
+    void setMidiDriver(const QString newMidiDriver);
     QStringList connections() const;
     QString subscription() const;
     void subscribe(const QString& portName);
+    void start();
     void stop();
     bool stopped();
 
+    /* FluidLite */
     void initReverb(int reverb_type);
     void initChorus(int chorus_type);
     void setReverbWet(int amount);
     void setChorusLevel(int amount);
     void openSoundfont(const QString fileName);
 
-#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
-    const QAudioDeviceInfo &audioDevice() const;
-    void setAudioDevice(const QAudioDeviceInfo &newAudioDevice);
-#else
-    const QAudioDevice &audioDevice() const;
-    void setAudioDevice(const QAudioDevice &newAudioDevice);
-#endif
-    QStringList availableAudioDevices() const;
-    
-    QString audioDeviceName() const;
-    void setAudioDeviceName(const QString newName);
+    static const int DEFAULT_SAMPLE_RATE;
+    static const int DEFAULT_RENDERING_FRAMES;
+    static const int DEFAULT_FRAME_CHANNELS;
 
-    const QString midiDriver() const;
-    void setMidiDriver(const QString newMidiDriver);
-
-private:
-    void initMIDI();
-    void initSynth();
-    void initAudio();
-    void initAudioDevices();
+    /* Qt Multimedia */
+    const QAudioFormat &format() const;
+    qint64 lastBufferSize() const;
+    void resetLastBufferSize();
 
 public slots:
     void noteOn(int chan, int note, int vel);
@@ -82,17 +75,12 @@ public slots:
     void program(const int chan, const int program);
     void channelPressure(const int chan, const int value);
     void pitchBend(const int chan, const int value);
-    void run();
-
-signals:
-    void finished();
+    
+private:
+    void initMIDI();
+    void initSynth();
 
 private:
-    bool m_Stopped;
-
-    QReadWriteLock m_mutex;
-    QString m_file;
-
     /* Drumstick RT*/
     QString m_midiDriver;
     QString m_portName;
@@ -100,22 +88,15 @@ private:
     drumstick::rt::MIDIInput *m_input;
 
     /* FluidLite */
-    int m_sampleRate, m_bufferSize, m_channels, m_sample_size;
+    int m_sampleRate, m_renderingFrames, m_channels, m_sample_size;
     fluid_settings_t *m_settings;
     fluid_synth_t *m_synth;
     bool m_sf2loaded;
+    QString m_file;
     
-    /* audio */
-    int m_requestedBufferTime;
-#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
-    QScopedPointer<QAudioOutput> m_audioOutput;
-    QList<QAudioDeviceInfo> m_availableDevices;
-    QAudioDeviceInfo m_audioDevice;
-#else
-    QScopedPointer<QAudioSink> m_audioOutput;
-    QList<QAudioDevice> m_availableDevices;
-    QAudioDevice m_audioDevice;
-#endif
+    /* Qt Multimedia */
+    int m_lastBufferSize;
+    QAudioFormat m_format;
 };
 
 #endif /*SYNTHRENDERER_H_*/
