@@ -1,11 +1,13 @@
 FluidLite MIDI Synthesizer for Qt
 =================================
 
-This project is a multiplatform real time MIDI Synth library based on the FluidLite Synthesizer.
+This project is a multiplatform real time MIDI Synth based on the FluidLite Synthesizer with Qt Multimedia audio output.
+
+![Screenshot](screenshot.png)
 
 The library uses Drumstick::RT MIDI input and Qt audio output. Complete compile-time dependencies are:
 * Qt5 or Qt6, including QtMultimedia. http://www.qt.io/
-* Drumstick 2, for Drumstick::RT MIDI input. http://sourceforge.net/projects/drumstick/
+* Drumstick 2, for Drumstick::RT MIDI input and for Drumstick::Widgets piano component. http://sourceforge.net/projects/drumstick/
 
 Just to clarify the Drumstick dependency: this project requires Drumstick::RT, but Drumstick does not depend on this project at all.
 
@@ -17,6 +19,9 @@ The project directory contains:
 
 Hacking
 -------
+
+Remember to use `git clone --recurse-submodules` when cloning the repository to populate the working copy with all the sources, including the submodule's.
+If you forgot to do that, then you may need to `git submodule update --init --recursive` afterwards.
 
 Use your favorite IDE or text editor with the source files. My preference is QtCreator: https://www.qt.io/ide/
 To build, test and debug you may also find QtCreator interesting. You should use CMake (>= 3.14) to configure the project.

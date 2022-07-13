@@ -29,7 +29,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Sonivox EAS Synth</string>
+   <string>FluidLite Synthesizer</string>
   </property>
   <property name="windowIcon">
    <iconset>
@@ -324,7 +324,7 @@
  <customwidgets>
   <customwidget>
    <class>drumstick::widgets::PianoKeybd</class>
-   <extends></extends>
+   <extends>QGraphicsView</extends>
    <header location="global">drumstick/pianokeybd.h</header>
   </customwidget>
  </customwidgets>
