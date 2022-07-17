@@ -36,8 +36,8 @@ public:
     int reverbType() const;
     void setReverbType(int reverbType);
 
-    int reverbWet() const;
-    void setReverbWet(int reverbWet);
+    int reverbLevel() const;
+    void setReverbLevel(int reverbWet);
 
     int chorusType() const;
     void setChorusType(int chorusType);
@@ -64,7 +64,7 @@ public:
     static const QString DEFAULT_AUDIO_DEVICE;
     static const int DEFAULT_BUFFER_TIME;
     static const int DEFAULT_REVERB_TYPE;
-    static const int DEFAULT_REVERB_WET;
+    static const int DEFAULT_REVERB_LEVEL;
     static const int DEFAULT_CHORUS_TYPE;
     static const int DEFAULT_CHORUS_LEVEL;
     static const int DEFAULT_VOLUME_LEVEL;
@@ -88,7 +88,7 @@ private:
     QString m_portName;
     int m_bufferTime;
     int m_reverbType;
-    int m_reverbWet;
+    int m_reverbLevel;
     int m_chorusType;
     int m_chorusLevel;
     int m_volumeLevel;

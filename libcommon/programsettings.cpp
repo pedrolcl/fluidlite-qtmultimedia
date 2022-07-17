@@ -33,9 +33,9 @@ const QString ProgramSettings::DEFAULT_MIDI_DRIVER =
 #endif
 const QString ProgramSettings::DEFAULT_AUDIO_DEVICE = QLatin1String("default");
 const int ProgramSettings::DEFAULT_BUFFER_TIME = 100;
-const int ProgramSettings::DEFAULT_REVERB_TYPE = 1;
-const int ProgramSettings::DEFAULT_REVERB_WET = 25800;
-const int ProgramSettings::DEFAULT_CHORUS_TYPE = -1;
+const int ProgramSettings::DEFAULT_REVERB_TYPE = 3;
+const int ProgramSettings::DEFAULT_REVERB_LEVEL = 75;
+const int ProgramSettings::DEFAULT_CHORUS_TYPE = 0;
 const int ProgramSettings::DEFAULT_CHORUS_LEVEL = 0;
 const int ProgramSettings::DEFAULT_VOLUME_LEVEL = 90;
 
@@ -55,7 +55,7 @@ void ProgramSettings::ResetDefaults()
     //qDebug() << Q_FUNC_INFO;
     m_bufferTime = DEFAULT_BUFFER_TIME;
     m_reverbType = DEFAULT_REVERB_TYPE;
-    m_reverbWet = DEFAULT_REVERB_WET;
+    m_reverbLevel = DEFAULT_REVERB_LEVEL;
     m_chorusType = DEFAULT_CHORUS_TYPE;
     m_chorusLevel = DEFAULT_CHORUS_LEVEL;
     m_volumeLevel = DEFAULT_VOLUME_LEVEL;
@@ -95,7 +95,7 @@ void ProgramSettings::internalRead(QSettings &settings)
     m_portName = settings.value("PortName", QString()).toString();
     m_bufferTime = settings.value("BufferTime", DEFAULT_BUFFER_TIME).toInt();
     m_reverbType = settings.value("ReverbType", DEFAULT_REVERB_TYPE).toInt();
-    m_reverbWet = settings.value("ReverbWet", DEFAULT_REVERB_WET).toInt();
+    m_reverbLevel = settings.value("ReverbLevel", DEFAULT_REVERB_LEVEL).toInt();
     m_chorusType = settings.value("ChorusType", DEFAULT_CHORUS_TYPE).toInt();
     m_chorusLevel = settings.value("ChorusLevel", DEFAULT_CHORUS_LEVEL).toInt();
     m_audioDeviceName = settings.value("AudioDevice", DEFAULT_AUDIO_DEVICE).toString();
@@ -111,7 +111,7 @@ void ProgramSettings::internalSave(QSettings &settings)
     settings.setValue("PortName", m_portName);
     settings.setValue("BufferTime", m_bufferTime);
     settings.setValue("ReverbType", m_reverbType);
-    settings.setValue("ReverbWet", m_reverbWet);
+    settings.setValue("ReverbLevel", m_reverbLevel);
     settings.setValue("ChorusType", m_chorusType);
     settings.setValue("ChorusLevel", m_chorusLevel);
     settings.setValue("AudioDevice", m_audioDeviceName);
@@ -177,6 +177,7 @@ int ProgramSettings::chorusLevel() const
 
 void ProgramSettings::setChorusLevel(int chorusLevel)
 {
+    qDebug() << Q_FUNC_INFO << chorusLevel;
     m_chorusLevel = chorusLevel;
 }
 
@@ -187,17 +188,19 @@ int ProgramSettings::chorusType() const
 
 void ProgramSettings::setChorusType(int chorusType)
 {
+    qDebug() << Q_FUNC_INFO << chorusType;
     m_chorusType = chorusType;
 }
 
-int ProgramSettings::reverbWet() const
+int ProgramSettings::reverbLevel() const
 {
-    return m_reverbWet;
+    return m_reverbLevel;
 }
 
-void ProgramSettings::setReverbWet(int reverbWet)
+void ProgramSettings::setReverbLevel(int ReverbLevel)
 {
-    m_reverbWet = reverbWet;
+    qDebug() << Q_FUNC_INFO << ReverbLevel;
+    m_reverbLevel = ReverbLevel;
 }
 
 int ProgramSettings::reverbType() const
@@ -207,6 +210,7 @@ int ProgramSettings::reverbType() const
 
 void ProgramSettings::setReverbType(int reverbType)
 {
+    qDebug() << Q_FUNC_INFO << reverbType;
     m_reverbType = reverbType;
 }
 

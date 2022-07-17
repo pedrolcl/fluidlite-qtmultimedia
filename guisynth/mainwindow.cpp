@@ -82,7 +82,7 @@ MainWindow::initialize()
     m_ui->spin_Buffer->setValue(ProgramSettings::instance()->bufferTime());
     int reverb = m_ui->combo_Reverb->findData(ProgramSettings::instance()->reverbType());
     m_ui->combo_Reverb->setCurrentIndex(reverb);
-    m_ui->dial_Reverb->setValue(ProgramSettings::instance()->reverbWet()); //0..32765
+    m_ui->dial_Reverb->setValue(ProgramSettings::instance()->reverbLevel());
     int chorus = m_ui->combo_Chorus->findData(ProgramSettings::instance()->chorusType());
     m_ui->combo_Chorus->setCurrentIndex(chorus);
     m_ui->dial_Chorus->setValue(ProgramSettings::instance()->chorusLevel());
@@ -117,15 +117,15 @@ MainWindow::reverbTypeChanged(int index)
     ProgramSettings::instance()->setReverbType(value);
     if (value < 0) {
         m_ui->dial_Reverb->setValue(0);
-        ProgramSettings::instance()->setReverbWet(0);
+        ProgramSettings::instance()->setReverbLevel(0);
     }
 }
 
 void
 MainWindow::reverbChanged(int value)
 {
-    m_synth->renderer()->setReverbWet(value);
-    ProgramSettings::instance()->setReverbWet(value);
+    m_synth->renderer()->setReverbLevel(value);
+    ProgramSettings::instance()->setReverbLevel(value);
 }
 
 void

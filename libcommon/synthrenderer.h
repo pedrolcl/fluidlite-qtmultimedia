@@ -54,7 +54,7 @@ public:
     /* FluidLite */
     void initReverb(int reverb_type);
     void initChorus(int chorus_type);
-    void setReverbWet(int amount);
+    void setReverbLevel(int amount);
     void setChorusLevel(int amount);
     void openSoundfont(const QString fileName);
 

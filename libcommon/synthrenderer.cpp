@@ -281,33 +281,33 @@ SynthRenderer::initReverb(int reverb_type)
     //qDebug() << Q_FUNC_INFO << reverb_type;
     switch( reverb_type ) {
     case 1:
-        fluid_synth_set_reverb(m_synth, 0.2, 0.0, 0.5, 0.9);
+        fluid_synth_set_reverb(m_synth, 0.2, 0.2, 0.75, 0.8);
         break;
     case 2:
-        fluid_synth_set_reverb(m_synth, 0.4, 0.2, 0.5, 0.8);
+        fluid_synth_set_reverb(m_synth, 0.4, 0.2, 0.75, 0.8);
         break;
     case 3:
-        fluid_synth_set_reverb(m_synth, 0.6, 0.4, 0.5, 0.7);
+        fluid_synth_set_reverb(m_synth, 0.6, 0.2, 0.75, 0.8);
         break;
     case 4:
-        fluid_synth_set_reverb(m_synth, 0.8, 0.7, 0.5, 0.6);
+        fluid_synth_set_reverb(m_synth, 0.8, 0.2, 0.75, 0.8);
         break;
     case 5:
-        fluid_synth_set_reverb(m_synth, 0.8, 1.0, 0.5, 0.5);
+        fluid_synth_set_reverb(m_synth, 1.0, 0.2, 0.75, 0.8);
         break;
     };
-    fluid_synth_set_reverb_on(m_synth, reverb_type);
+    fluid_synth_set_reverb_on(m_synth, reverb_type > 0 ?  1 : 0 );
 }
 
 void
 SynthRenderer::initChorus(int chorus_type)
 {
     //qDebug() << Q_FUNC_INFO << chorus_type;
-    fluid_synth_set_chorus_on(m_synth, chorus_type);
+    fluid_synth_set_chorus_on(m_synth, chorus_type > 0 ?  1 : 0 );
 }
 
 void
-SynthRenderer::setReverbWet(int amount)
+SynthRenderer::setReverbLevel(int amount)
 {
     qreal newlevel = amount / 100.0;
     qreal level = fluid_synth_get_reverb_level(m_synth);
