@@ -24,7 +24,7 @@ set_target_properties( fluidlite-libcommon PROPERTIES
 
 target_link_libraries( fluidlite-libcommon 
     PUBLIC
-        fluidlite::fluidlite
+        fluidlite::fluidlite-static
         Qt${QT_VERSION_MAJOR}::Core
         Qt${QT_VERSION_MAJOR}::Multimedia
     PRIVATE
