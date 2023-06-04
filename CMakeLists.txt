@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.14)
 
 project( fluidlite-qtmultimedia
          LANGUAGES C CXX
-         VERSION 0.0.1
+         VERSION 0.0.2
          DESCRIPTION "FluidLite Synth for Qt" )
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
